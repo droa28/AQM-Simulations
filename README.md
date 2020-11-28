@@ -10,7 +10,7 @@ PID_NLM_x2a : compares between different controllers using Misra Model.\
 PID_NLM_x2b : same as PID_NLM_x2a except for the Kahe Controller. \
 PID_NLM_x2c : same as PID_NLM_x2a except that the PID controller blocks uses du/dt block.\
 AQM_param   : script file for network parameters and P(I)D controller parameters to be used by Simulink models.
-# NS-3 Simulation Files
+# NS-3 Simulation Files (NS-3.30.1 Release)
 wscript            : to be placed in "\\src\\traffic-control" folder.\
 pid-script.cc      : simulation script file, to be placed in "\\scratch" folder.\
 pid-queue-disc.h   : header file for queue disc, to be placed in "\\src\\traffic-control\\model" folder.\
