@@ -1,6 +1,6 @@
 	/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2020 R. Olusegun Alli-Oke
+ * Copyright (c) October 2021 : R. Olusegun Alli-Oke
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: R. Olusegun Alli-Oke <razak.alli-oke@elizadeuniversity.edu.ng>
+ * Author: R. Olusegun Alli-Oke <razkgb2012@gmail.com>, <razak.alli-oke@elizadeuniversity.edu.ng>
  */
 
 
@@ -77,7 +77,6 @@ private:
   Time m_sUpdate;                                              //!< Start time to use CalculateP () method to compute drop ratio
   Time m_tUpdate;                                              //!< compute drop probability every m_tUpdate secs (i.e. 1/m_tUpdate is the sampling frequency of discrete PID controller)
   Time m_sStep;                                                //!< start step-change to desired queue-length from linearation equilibrium queue-length
-  uint32_t m_N;                                                //!< PID's derivative term's filter coefficient
   QueueSize  m_queueLimit;                                     //!< maximum queue-size of qdisc (internal) queue
   QueueSize  m_QsizeRef;                                       //!< variable for storing m_QsizeRefEQ or m_QsizeRefDQ
   QueueSize  m_QsizeRefEQ;                                     //!< Linearization equilibrium queue size

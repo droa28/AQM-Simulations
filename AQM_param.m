@@ -1,3 +1,5 @@
+%% copyright © November 2021, R. Olusegun Alli-Oke.
+
 clc, clear all; format; 
 
 

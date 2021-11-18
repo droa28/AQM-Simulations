@@ -1,6 +1,6 @@
  	/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2020 R. Olusegun Alli-Oke
+ * Copyright (c) October 2021 : R. Olusegun Alli-Oke
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: R. Olusegun Alli-Oke <razak.alli-oke@elizadeuniversity.edu.ng>
+ * Author: R. Olusegun Alli-Oke <razkgb2012@gmail.com>, <razak.alli-oke@elizadeuniversity.edu.ng>
  */
 
 //qDisc size is same as internal queue size because qDisc has only one internal queue. So, "this->GetCurrentSize();" (via qDisc class) is equivalent to "this->GetInternalQueue (0)-> GetCurrentSize(); " (via Queuebase).
@@ -80,11 +80,6 @@ TypeId PidQueueDisc::GetTypeId (void)
                        DoubleValue (0.0),
                        MakeDoubleAccessor (&PidQueueDisc::m_u0),
                        MakeDoubleChecker<double> ())
-        .AddAttribute ("N",
-                       "Value of N",
-                       UintegerValue (0),
-                       MakeUintegerAccessor (&PidQueueDisc::m_N),
-                       MakeUintegerChecker<uint32_t> ())
         .AddAttribute ("Sstep",
                        "Start time to step-change in desired queue-length",
                        TimeValue (Seconds (0.0)),
@@ -133,7 +128,8 @@ PidQueueDisc::PidQueueDisc ()
     {
       NS_LOG_FUNCTION (this);
       m_uv = CreateObject<UniformRandomVariable> ();
-      int64_t strmm = 12345; m_uv->SetStream (strmm);
+      //int64_t strmm = 123456; m_uv->SetStream (strmm);    // globally done via "RngSeedManager::SetSeed(1)" in pid-script.cc
+      std::cout << "\t\trng stream: " <<  m_uv->GetStream () << "\n" << std::endl;
     }
 
 // KEY METHOD 1: Check Configuration (step b)
@@ -169,15 +165,15 @@ bool PidQueueDisc::CheckConfig (void)
 void PidQueueDisc::InitializeParams (void)
     {
       // Initially queue is empty so variables are initialize to zero.
-      m_dropProb = -1;                  // ensures that there is no drop when in open loop
-      m_dropProb1 = 0;                  //since it is linearized controller (ie du0)
+      m_dropProb = -1;                  // ensures that there is no drop when in open loop.
+      m_dropProb1 = 0;                  //since it is linearized controller (ie du0).
       m_dropProb2 = 0;
       m_ErrQsize1 = 0; 
       m_ErrQsize2 = 0;
       m_QsizeRef = m_QsizeRefEQ;
-      std::cout << "linearization equilibrium queue-length: " <<  m_QsizeRef.GetValue() << std::endl;
-      m_rtrsEvent1 = Simulator::Schedule (m_sStep, &PidQueueDisc::QSizeRefUpdate, this);
-      m_rtrsEvent2 = Simulator::Schedule (m_sUpdate, &PidQueueDisc::CalculateP, this);     //step-change before updating drop ratio
+      std::cout << "linearization equilibrium queue-length (q0): " <<  m_QsizeRef.GetValue() << std::endl;
+      m_rtrsEvent1 = Simulator::Schedule (m_sStep, &PidQueueDisc::QSizeRefUpdate, this);   //effects step-change from linearization equlibrium point (q0) to desired reference queue-length (qref)
+      m_rtrsEvent2 = Simulator::Schedule (m_sUpdate, &PidQueueDisc::CalculateP, this);     //starts the computation of drop-ratio method (CalculateP) i.e. initiates the closed-loop control
     }
    
 
@@ -196,7 +192,7 @@ bool PidQueueDisc::DoEnqueue (Ptr<QueueDiscItem> item)
         }
       else if (bv)
         {  
-          //Early probability drop: proactive --> calls the DropEarly submethod --> which uses m_dropProb from the CalculateP sub-method
+          //Early probability drop: proactive --> calls the DropEarly sub-method --> which uses m_dropProb from the CalculateP sub-method
           DropBeforeEnqueue (item, UNFORCED_DROP);
           return false;
         }
@@ -269,7 +265,7 @@ bool PidQueueDisc::DropEarly (Ptr<QueueDiscItem> item)
       //DropEarly is bypassed if DropProbability p is less than the random variable v \in [0, 1]
       if (p < v)                                                      
         {
-          //if (p < 0) { std::cout << "Drop: " << "\t" << Simulator::Now ().GetSeconds () << "\t" << p << std::endl;} //checking there is no drop in open-loop mode
+          //if (p < 0) { std::cout << "No Drop: " << "\t" << Simulator::Now ().GetSeconds () << "\t" << p << std::endl;} 	// checking to make sure that there is no drop in open-loop mode
           return false;  //dont drop packet
         }
 
@@ -281,30 +277,28 @@ void PidQueueDisc::CalculateP ()
     {
       NS_LOG_FUNCTION (this);
       double pp;
-      //QueueSize nQueued = this->GetCurrentSize();    //current queue size (packets) of qdisc (internal) queue
+      //QueueSize nQueued = this->GetCurrentSize();   					                 //current queue size (packets) of qdisc (internal) queue
             Ptr<NetDeviceQueueInterface> qti = this->GetNetDeviceQueueInterface () ;
             Ptr<NetDevice> ndd = qti->GetObject<NetDevice>(); 
             PointerValue ptrV; ndd->GetAttribute ("TxQueue", ptrV);
             Ptr<Queue<Packet>> txQueue = ptrV.Get<Queue<Packet>>();
-      m_Qsize = txQueue->GetCurrentSize();             //current queue size (packets) of netdevice (external) queue
-      m_ErrQsize0 = double(m_QsizeRef.GetValue()) - double(m_Qsize.GetValue()); 
+      m_Qsize = txQueue->GetCurrentSize();             							//current queue size (packets) of netdevice (external) queue
+      m_ErrQsize0 = double(m_QsizeRef.GetValue()) - double(m_Qsize.GetValue());  	                //current error
      
       //PID ( tustin (integral term) + backward difference (differential term) )  ;  (see equation 15) 
       m_dropProb0 = (m_a * m_dropProb1)  + (m_b * m_dropProb2)  +  ( m_c * m_ErrQsize0 )  +  ( m_d * m_ErrQsize1 )  +  ( m_e * m_ErrQsize2 );     //unsaturated drop probability, m_dropProb0
 
-      m_dropProb2 = m_dropProb1;                      // store previous unsaturated drop probability
-      m_dropProb1 = m_dropProb0;                      // saturation comes afterwards of storing m_dropProb0 not before it, see simulink file "p9_cc"
-      m_ErrQsize2 = m_ErrQsize1;
-      m_ErrQsize1 = m_ErrQsize0;
+      m_dropProb2 = m_dropProb1;    m_dropProb1 = m_dropProb0;               // store current and previous unsaturated drop probabilities .....m_dropProb0 needs to be stored before adding m_u0, see below
+      m_ErrQsize2 = m_ErrQsize1;   m_ErrQsize1 = m_ErrQsize0;                           // store current and previous errors
 
-      m_dropProb0 = m_u0 + m_dropProb0;               // (see equation 18)
+      m_dropProb0 = m_u0 + m_dropProb0;              							// (see equation 18);  m_u0 needs to be added, see Figure 5
 
-      pp = (m_dropProb0 <= 0) ? 0 : m_dropProb0; m_dropProb = (pp <= 1) ? pp : 1;                                                                //saturated drop probability, m_dropProb  
+      pp = (m_dropProb0 <= 0) ? 0 : m_dropProb0; m_dropProb = (pp <= 1) ? pp : 1;                       //saturated drop probability, m_dropProb . Saturation comes after equation 18 and not before it,  see Figure 5
 
       m_rtrsEvent2 = Simulator::Schedule (m_tUpdate, &PidQueueDisc::CalculateP, this);
       
     //preferably after scheduling an m_tUpdate of m_rtrsEvent2; worst case, we miss some data points, doesnt affect computation of control action m_dropProb
-      AsciiTraceHelper asciiTraceHelper;  Ptr<OutputStreamWrapper> stream1b = asciiTraceHelper.CreateFileStream ("/media/sf_SharedFolder/nsplots/Jplots/dprobp.dat",std::ios::app); 
+      AsciiTraceHelper asciiTraceHelper;  Ptr<OutputStreamWrapper> stream1b = asciiTraceHelper.CreateFileStream ("nsplots/Jplots/dprobp.dat",std::ios::app); 
       *stream1b->GetStream () << Simulator::Now ().GetSeconds () << "\t" << m_dropProb0 << "\t" << m_dropProb << "\t" << m_uv->GetValue() << std::endl;
     }
 
@@ -313,7 +307,7 @@ void PidQueueDisc::QSizeRefUpdate ()
     {
      NS_LOG_FUNCTION (this);
      m_QsizeRef = m_QsizeRefDQ;
-     std::cout << "desired set-point reference queue-length: " <<  m_QsizeRef.GetValue() << "\n" << std::endl;
+     std::cout << "desired set-point reference queue-length (qref): " <<  m_QsizeRef.GetValue() << "\n" << std::endl;
     }
 
 
@@ -321,8 +315,6 @@ void PidQueueDisc::PWMUpdate ()
     {
      NS_LOG_FUNCTION (this);
     }
-
-
 
 
 

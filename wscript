@@ -6,6 +6,8 @@
 # def configure(conf):
 #     conf.check_nonfatal(header_name='stdint.h', define_name='HAVE_STDINT_H')
 
+# changes @ Nov2021, R. Olusegun Alli-Oke.
+
 def build(bld):
     module = bld.create_ns3_module('traffic-control', ['core', 'network'])
     module.source = [

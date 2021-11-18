@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.495"
+    ComputedModelVersion    "1.498"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -36,11 +36,11 @@ Model {
   Creator		  "razkg"
   UpdateHistory		  "UpdateHistoryNever"
   ModifiedByFormat	  "%<Auto>"
-  LastModifiedBy	  "olusegun"
+  LastModifiedBy	  "droa"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Tue Jan 01 11:20:39 2013"
-  RTWModifiedTimeStamp	  278903935
-  ModelVersionFormat	  "1.%<AutoIncrement:495>"
+  LastModifiedDate	  "Tue Jan 01 00:26:41 2013"
+  RTWModifiedTimeStamp	  278900539
+  ModelVersionFormat	  "1.%<AutoIncrement:498>"
   ConfigurationManager	  "None"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -78,6 +78,7 @@ Model {
     $ObjectID		    2
     $ClassName		    "Simulink.SimulationData.ModelLoggingInfo"
     model_		    "Oloop_JLinearizedModel"
+    signals_		    []
     overrideMode_	    [0.0]
     Array {
       Type		      "Cell"
@@ -902,7 +903,7 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "100"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "1374"
+    SIDHighWatermark	    "1376"
     Block {
       BlockType		      Constant
       Name		      "Constant1"
@@ -2904,6 +2905,14 @@ Model {
       SID		      "1234"
       Name		      "q"
       Position		      [973, 447]
+    }
+    Annotation {
+      SID		      "1375"
+      Name		      "copyright © November 2021, R. Olusegun Alli-Oke."
+      Position		      [186, 44]
+      FontName		      "Cambria"
+      FontSize		      14
+      FontWeight	      "bold"
     }
   }
 }

@@ -149,18 +149,6 @@ TcpTxBuffer::SetMaxBufferSize (uint32_t n)
   m_maxBuffer = n;
 }
 
-bool            //PATCH1a for the error of "not checking if SACK is enabled" before ASSERT in "AddRenoStack"
-TcpTxBuffer::IsSackEnabled (void) const
-{
-  return m_sackEnabled;
-}
-
-void            //PATCH1b for the error of "not checking if SACK is enabled" before ASSERT in "AddRenoStack"
-TcpTxBuffer::SetSackEnabled (bool enabled)
-{
-  m_sackEnabled = enabled;
-}
- 
 uint32_t
 TcpTxBuffer::Available (void) const
 {
@@ -1353,16 +1341,15 @@ TcpTxBuffer::AddRenoSack (void)
 {
   NS_LOG_FUNCTION (this);
   
-  if (m_sackEnabled)        //PATCH1c for the error of "not checking if SACK is enabled" before ASSERT in "AddRenoStack"
-    {
-      NS_ASSERT (m_sentList.size () > 1);
-    }
-  else
-    {
-      NS_ASSERT (m_sentList.size () > 0);
-    }
+  if (m_sentList.size () <= 1)  //patch for the error of "not checking if SACK is enabled" before ASSERT
+  {
+    NS_LOG_INFO ("Request to add a reno SACK, but the sent list is 1. Ignore the request.");
+    return;
+  }
 
-  m_renoSack = true;
+NS_ASSERT (m_sentList.size () > 1);
+
+m_renoSack = true;
 
   // We can _never_ SACK the head, so start from the second segment sent
   auto it = ++m_sentList.begin ();
@@ -1474,13 +1461,3 @@ operator<< (std::ostream & os, TcpTxBuffer const & tcpTxBuf)
 
 } // namespace ns3
 
-/* Alternative for PATCH1(c)
-if (m_sentList.size () <= 1)  //patch for the error of "not checking if SACK is enabled" before ASSERT
-  {
-    NS_LOG_INFO ("Request to add a reno SACK, but the sent list is 1. Ignore the request.");
-    return;
-  }
-
-NS_ASSERT (m_sentList.size () > 1);
-
-m_renoSack = true;*/
